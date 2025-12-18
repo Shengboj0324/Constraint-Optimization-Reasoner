@@ -1,0 +1,9 @@
+google-tunix[prod]
+jax
+flax
+optax
+sentencepiece
+transformers
+torch
+numpy
+pandas
