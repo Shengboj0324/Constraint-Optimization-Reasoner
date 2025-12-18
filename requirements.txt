@@ -7,3 +7,6 @@ transformers
 torch
 numpy
 pandas
+fastapi
+uvicorn
+pydantic

@@ -1,11 +1,10 @@
 
 import json
 import re
+import ast
+from typing import List, Dict, Any
 
 class Verifier:
-    def __init__(self):
-        pass
-
     def verify_feasibility(self, problem_text: str, solution_data: str) -> bool:
         """
         Parses problem and solution, checks constraints.
@@ -14,22 +13,28 @@ class Verifier:
         try:
             # Parse capacity from problem text
             cap_match = re.search(r"Knapsack capacity: (\d+)", problem_text)
-            capacity = int(cap_match.group(1)) if cap_match else 0
+            if not cap_match:
+                print("Could not parse capacity.")
+                return False
+            capacity = int(cap_match.group(1))
             
-            # Parse items from problem text (simplified parsing)
-            # In a real app, problem object would be passed, not text.
-            # But we only have text here.
-            
-            # Extract item dictionaries
-            import ast
+            # Parse items from problem text
             items_match = re.search(r"Available items: (\[.*?\])", problem_text)
-            items = ast.literal_eval(items_match.group(1)) if items_match else []
+            items: List[Dict[str, Any]] = ast.literal_eval(items_match.group(1)) if items_match else []
             
             item_map = {item['name']: item for item in items}
             
             # Parse solution
-            selected_names = json.loads(solution_data)
+            try:
+                selected_names: List[str] = json.loads(solution_data)
+            except json.JSONDecodeError:
+                print("Solution is not valid JSON.")
+                return False
             
+            if not isinstance(selected_names, list):
+                print("Solution is not a list.")
+                return False
+
             total_weight = 0
             for name in selected_names:
                 if name in item_map:
@@ -38,10 +43,15 @@ class Verifier:
                     print(f"Unknown item: {name}")
                     return False
             
-            return total_weight <= capacity
+            # Check constraint
+            if total_weight > capacity:
+                print(f"Feasibility Failed: Total weight {total_weight} > Capacity {capacity}")
+                return False
+                
+            return True
             
         except Exception as e:
-            print(f"Verification error: {e}")
+            print(f"Verification error (Feasibility): {e}")
             return False
 
     def verify_optimality(self, problem_text: str, solution_data: str) -> bool:
@@ -50,15 +60,15 @@ class Verifier:
         For Knapsack, we solve it exactly to check.
         """
         try:
-            # Re-parse (duplicate logic, should be refactored in a real system)
             cap_match = re.search(r"Knapsack capacity: (\d+)", problem_text)
-            capacity = int(cap_match.group(1)) if cap_match else 0
+            if not cap_match:
+                return False
+            capacity = int(cap_match.group(1)) 
             
-            import ast
             items_match = re.search(r"Available items: (\[.*?\])", problem_text)
-            items = ast.literal_eval(items_match.group(1)) if items_match else []
+            items: List[Dict[str, Any]] = ast.literal_eval(items_match.group(1)) if items_match else []
             
-            # Solve exactly
+            # Solve exactly using DP (same logic as ground truth, but independent implementation context)
             n = len(items)
             dp = [[0 for _ in range(capacity + 1)] for _ in range(n + 1)]
 
@@ -82,8 +92,12 @@ class Verifier:
                 if name in item_map:
                     sol_val += item_map[name]['value']
             
-            return sol_val == max_val
+            if sol_val != max_val:
+                print(f"Optimality Failed: Solution Value {sol_val} != Optimal {max_val}")
+                return False
+                
+            return True
             
         except Exception as e:
-            print(f"Optimality verification error: {e}")
+            print(f"Verification error (Optimality): {e}")
             return False
