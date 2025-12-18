@@ -1,14 +1,21 @@
+#!/usr/bin/env python
+"""
+End-to-end validation script for Constraint Optimization Reasoner.
+Tests the complete workflow: data generation -> inference -> verification.
+"""
 
 import sys
 import os
 import json
 
-# Add src to path
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../src')))
+# Add project root to path
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, project_root)
 
-from format_utils import parse_output
-from verifiers import Verifier
-from data_loader import OptimizationDataset
+from src.format_utils import parse_output, format_input
+from src.verifiers import Verifier
+from src.data_loader import OptimizationDataset
+from src.rewards import format_reward_func, feasibility_reward_func, optimality_reward_func
 
 def main():
     print("Starting End-to-End Validation...")

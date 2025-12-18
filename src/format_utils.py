@@ -30,11 +30,27 @@ Problem:
 """
 
 def format_input(problem_text: str) -> str:
+    """
+    Format a problem text into a prompt using the template.
+
+    Args:
+        problem_text: The problem description
+
+    Returns:
+        Formatted prompt string
+    """
     return PROMPT_TEMPLATE.format(problem_text=problem_text)
 
 def parse_output(output_text: str) -> dict:
     """
     Parses the model output into components.
+
+    Args:
+        output_text: The raw model output
+
+    Returns:
+        Dictionary with keys: reasoning, feasibility_certificate,
+        optimality_certificate, answer. Values are None if tag not found.
     """
     import re
     

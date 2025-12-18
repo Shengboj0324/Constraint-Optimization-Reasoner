@@ -1,5 +1,5 @@
 google-tunix[prod]
-jax
+jax[cpu]
 flax
 optax
 sentencepiece
@@ -10,3 +10,8 @@ pandas
 fastapi
 uvicorn
 pydantic
+pytest
+pytest-cov
+black
+mypy
+types-requests

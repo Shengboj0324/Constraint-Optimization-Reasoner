@@ -1,10 +1,22 @@
+"""
+Verifiers for constraint optimization solutions.
+Provides deterministic verification of feasibility and optimality.
+"""
 
 import json
 import re
 import ast
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Tuple
+from src.logger import get_logger
+
+logger = get_logger(__name__)
 
 class Verifier:
+    """
+    Verifier class for constraint optimization solutions.
+    Provides methods to verify feasibility and optimality of solutions.
+    """
+
     def verify_feasibility(self, problem_text: str, solution_data: str) -> bool:
         """
         Parses problem and solution, checks constraints.
@@ -14,9 +26,10 @@ class Verifier:
             # Parse capacity from problem text
             cap_match = re.search(r"Knapsack capacity: (\d+)", problem_text)
             if not cap_match:
-                print("Could not parse capacity.")
+                logger.warning("Could not parse capacity from problem text")
                 return False
             capacity = int(cap_match.group(1))
+            logger.debug(f"Parsed capacity: {capacity}")
             
             # Parse items from problem text
             items_match = re.search(r"Available items: (\[.*?\])", problem_text)
@@ -27,31 +40,34 @@ class Verifier:
             # Parse solution
             try:
                 selected_names: List[str] = json.loads(solution_data)
-            except json.JSONDecodeError:
-                print("Solution is not valid JSON.")
+            except json.JSONDecodeError as e:
+                logger.warning(f"Solution is not valid JSON: {e}")
                 return False
-            
+
             if not isinstance(selected_names, list):
-                print("Solution is not a list.")
+                logger.warning("Solution is not a list")
                 return False
+
+            logger.debug(f"Selected items: {selected_names}")
 
             total_weight = 0
             for name in selected_names:
                 if name in item_map:
                     total_weight += item_map[name]['weight']
                 else:
-                    print(f"Unknown item: {name}")
+                    logger.warning(f"Unknown item in solution: {name}")
                     return False
-            
+
             # Check constraint
             if total_weight > capacity:
-                print(f"Feasibility Failed: Total weight {total_weight} > Capacity {capacity}")
+                logger.warning(f"Feasibility Failed: Total weight {total_weight} > Capacity {capacity}")
                 return False
-                
+
+            logger.info(f"Feasibility check passed: weight={total_weight}, capacity={capacity}")
             return True
             
         except Exception as e:
-            print(f"Verification error (Feasibility): {e}")
+            logger.error(f"Verification error (Feasibility): {e}", exc_info=True)
             return False
 
     def verify_optimality(self, problem_text: str, solution_data: str) -> bool:
@@ -93,11 +109,12 @@ class Verifier:
                     sol_val += item_map[name]['value']
             
             if sol_val != max_val:
-                print(f"Optimality Failed: Solution Value {sol_val} != Optimal {max_val}")
+                logger.warning(f"Optimality Failed: Solution Value {sol_val} != Optimal {max_val}")
                 return False
-                
+
+            logger.info(f"Optimality check passed: solution_value={sol_val}, optimal_value={max_val}")
             return True
-            
+
         except Exception as e:
-            print(f"Verification error (Optimality): {e}")
+            logger.error(f"Verification error (Optimality): {e}", exc_info=True)
             return False

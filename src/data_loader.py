@@ -1,37 +1,61 @@
+"""
+Data loader for constraint optimization problems.
+Generates synthetic Knapsack problems with ground truth solutions and reasoning traces.
+"""
 
 import json
 import random
 from typing import List, Dict, Tuple, TypedDict, Any
 from dataclasses import dataclass, asdict
+from src.logger import get_logger
+
+logger = get_logger(__name__)
 
 @dataclass
 class KnapsackItem:
+    """Represents an item in a knapsack problem."""
     name: str
     weight: int
     value: int
 
 @dataclass
 class VerificationResult:
+    """Contains feasibility and optimality certificates for a solution."""
     feasibility: str
     optimality: str
 
 class DatasetEntry(TypedDict):
-    problem: str
-    target: str
-    id: str
+    """Type definition for a dataset entry."""
+    problem: str  # Problem description
+    target: str   # Target output with reasoning and certificates
+    id: str       # Unique identifier
 
 class OptimizationDataset:
     """
     Dataset loader for constraint optimization problems.
     Generates synthetic data with 'Proof-Carrying' reasoning traces.
     """
-    def __init__(self, size: int = 100):
+    def __init__(self, size: int = 100, seed: int = 42):
+        """
+        Initialize the dataset.
+
+        Args:
+            size: Number of problems to generate
+            seed: Random seed for reproducibility
+        """
         self.size = size
+        self.seed = seed
+        random.seed(seed)
+        logger.info(f"Initializing OptimizationDataset with size={size}, seed={seed}")
         self.data: List[DatasetEntry] = self._generate_synthetic_data()
+        logger.info(f"Successfully generated {len(self.data)} problems")
 
     def _generate_synthetic_data(self) -> List[DatasetEntry]:
         """
         Generates knapsack problems with ground truth solutions.
+
+        Returns:
+            List of dataset entries with problems and target outputs
         """
         data: List[DatasetEntry] = []
         for i in range(self.size):
