@@ -7,7 +7,7 @@ import sys
 import os
 
 # Add src to path
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../src')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../src")))
 
 from format_utils import format_input, parse_output, PROMPT_TEMPLATE
 
@@ -16,7 +16,7 @@ def test_format_input():
     """Test that format_input creates proper prompts."""
     problem = "Knapsack capacity: 10. Available items: [{'name': 'A', 'weight': 5, 'value': 10}]"
     formatted = format_input(problem)
-    
+
     assert "Problem:" in formatted
     assert problem in formatted
     assert "<reasoning>" in formatted
@@ -43,17 +43,17 @@ DP algorithm confirms maximum value is 10.
 <answer>
 ["Item_0"]
 </answer>"""
-    
+
     parsed = parse_output(output)
-    
-    assert parsed['reasoning'] is not None
-    assert "Step 1" in parsed['reasoning']
-    assert parsed['feasibility_certificate'] is not None
-    assert "Constraints satisfied" in parsed['feasibility_certificate']
-    assert parsed['optimality_certificate'] is not None
-    assert "maximum value" in parsed['optimality_certificate']
-    assert parsed['answer'] is not None
-    assert "Item_0" in parsed['answer']
+
+    assert parsed["reasoning"] is not None
+    assert "Step 1" in parsed["reasoning"]
+    assert parsed["feasibility_certificate"] is not None
+    assert "Constraints satisfied" in parsed["feasibility_certificate"]
+    assert parsed["optimality_certificate"] is not None
+    assert "maximum value" in parsed["optimality_certificate"]
+    assert parsed["answer"] is not None
+    assert "Item_0" in parsed["answer"]
 
 
 def test_parse_output_missing_tags():
@@ -65,32 +65,32 @@ Some reasoning
 <answer>
 ["Item_0"]
 </answer>"""
-    
+
     parsed = parse_output(output)
-    
-    assert parsed['reasoning'] is not None
-    assert parsed['feasibility_certificate'] is None
-    assert parsed['optimality_certificate'] is None
-    assert parsed['answer'] is not None
+
+    assert parsed["reasoning"] is not None
+    assert parsed["feasibility_certificate"] is None
+    assert parsed["optimality_certificate"] is None
+    assert parsed["answer"] is not None
 
 
 def test_parse_output_empty():
     """Test parsing empty output."""
     output = ""
     parsed = parse_output(output)
-    
-    assert parsed['reasoning'] is None
-    assert parsed['feasibility_certificate'] is None
-    assert parsed['optimality_certificate'] is None
-    assert parsed['answer'] is None
+
+    assert parsed["reasoning"] is None
+    assert parsed["feasibility_certificate"] is None
+    assert parsed["optimality_certificate"] is None
+    assert parsed["answer"] is None
 
 
 def test_parse_output_malformed():
     """Test parsing malformed output."""
     output = "<reasoning>No closing tag"
     parsed = parse_output(output)
-    
-    assert parsed['reasoning'] is None
+
+    assert parsed["reasoning"] is None
 
 
 def test_parse_output_nested_content():
@@ -111,12 +111,12 @@ Optimal
 <answer>
 ["A", "B"]
 </answer>"""
-    
+
     parsed = parse_output(output)
-    
-    assert parsed['reasoning'] is not None
-    assert "<item>A</item>" in parsed['reasoning']
-    assert parsed['answer'] is not None
+
+    assert parsed["reasoning"] is not None
+    assert "<item>A</item>" in parsed["reasoning"]
+    assert parsed["answer"] is not None
 
 
 def test_prompt_template_format():
@@ -132,7 +132,6 @@ def test_format_input_with_special_characters():
     """Test format_input with special characters."""
     problem = "Test problem with 'quotes' and \"double quotes\" and <brackets>"
     formatted = format_input(problem)
-    
+
     assert problem in formatted
     assert "Problem:" in formatted
-

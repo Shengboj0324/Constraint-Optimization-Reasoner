@@ -8,7 +8,7 @@ import os
 import tempfile
 
 # Add src to path
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../src')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../src")))
 
 # Import with error handling for JAX issues
 try:
@@ -21,9 +21,9 @@ def test_mock_inference_generate():
     """Test MockInference generates valid output."""
     mock = MockInference()
     prompts = ["Test prompt 1", "Test prompt 2"]
-    
+
     outputs = mock.generate(prompts)
-    
+
     assert len(outputs) == 2
     for output in outputs:
         assert "<reasoning>" in output
@@ -37,7 +37,7 @@ def test_inference_engine_initialization_mock():
     with tempfile.TemporaryDirectory() as tmpdir:
         non_existent_path = os.path.join(tmpdir, "non_existent_model")
         engine = InferenceEngine(non_existent_path)
-        
+
         assert engine.model_path == non_existent_path
         assert isinstance(engine.engine, MockInference)
 
@@ -47,19 +47,19 @@ def test_inference_engine_solve():
     with tempfile.TemporaryDirectory() as tmpdir:
         non_existent_path = os.path.join(tmpdir, "non_existent_model")
         engine = InferenceEngine(non_existent_path)
-        
+
         problem = "Knapsack capacity: 10. Available items: [{'name': 'Item_0', 'weight': 5, 'value': 10}]"
         result = engine.solve(problem)
-        
+
         assert "raw_output" in result
         assert "parsed" in result
         assert "verification" in result
-        
+
         assert "reasoning" in result["parsed"]
         assert "feasibility_certificate" in result["parsed"]
         assert "optimality_certificate" in result["parsed"]
         assert "answer" in result["parsed"]
-        
+
         assert "feasible" in result["verification"]
         assert "optimal" in result["verification"]
         assert "verified" in result["verification"]
@@ -70,11 +70,11 @@ def test_inference_engine_solve_verification():
     with tempfile.TemporaryDirectory() as tmpdir:
         non_existent_path = os.path.join(tmpdir, "non_existent_model")
         engine = InferenceEngine(non_existent_path)
-        
+
         # MockInference returns ["Item_0"] which should be valid for this problem
         problem = "Knapsack capacity: 10. Available items: [{'name': 'Item_0', 'weight': 5, 'value': 10}]"
         result = engine.solve(problem)
-        
+
         # The mock output should be feasible
         assert result["verification"]["feasible"] is True
 
@@ -84,12 +84,12 @@ def test_inference_engine_solve_multiple_problems():
     with tempfile.TemporaryDirectory() as tmpdir:
         non_existent_path = os.path.join(tmpdir, "non_existent_model")
         engine = InferenceEngine(non_existent_path)
-        
+
         problems = [
             "Knapsack capacity: 10. Available items: [{'name': 'Item_0', 'weight': 5, 'value': 10}]",
             "Knapsack capacity: 20. Available items: [{'name': 'Item_0', 'weight': 10, 'value': 20}]",
         ]
-        
+
         for problem in problems:
             result = engine.solve(problem)
             assert "verification" in result
@@ -99,7 +99,7 @@ def test_inference_engine_solve_multiple_problems():
 def test_mock_inference_consistency():
     """Test that MockInference returns consistent format."""
     mock = MockInference()
-    
+
     # Generate multiple times
     for _ in range(5):
         outputs = mock.generate(["test"])
@@ -112,15 +112,14 @@ def test_inference_engine_verifier_integration():
     with tempfile.TemporaryDirectory() as tmpdir:
         non_existent_path = os.path.join(tmpdir, "non_existent_model")
         engine = InferenceEngine(non_existent_path)
-        
+
         # Verifier should be initialized
         assert engine.verifier is not None
-        
+
         # Test with a problem
         problem = "Knapsack capacity: 10. Available items: [{'name': 'Item_0', 'weight': 5, 'value': 10}]"
         result = engine.solve(problem)
-        
+
         # Verification should have been performed
         assert "feasible" in result["verification"]
         assert "optimal" in result["verification"]
-

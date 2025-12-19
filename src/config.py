@@ -11,6 +11,7 @@ from typing import Optional, List
 @dataclass
 class DataConfig:
     """Configuration for data generation and loading."""
+
     train_size: int = 500
     val_size: int = 50
     test_size: int = 100
@@ -27,6 +28,7 @@ class DataConfig:
 @dataclass
 class ModelConfig:
     """Configuration for model architecture and loading."""
+
     base_model: str = "google/gemma-2b"
     dtype: str = "bfloat16"
     use_flash_attention: bool = True
@@ -40,6 +42,7 @@ class ModelConfig:
 @dataclass
 class TrainingConfig:
     """Configuration for SFT training."""
+
     output_dir: str = "./checkpoints/sft_baseline"
     num_epochs: int = 3
     per_device_train_batch_size: int = 4
@@ -60,6 +63,7 @@ class TrainingConfig:
 @dataclass
 class RLConfig:
     """Configuration for GRPO (RL) training."""
+
     output_dir: str = "./checkpoints/grpo_optimized"
     num_train_epochs: int = 1
     per_device_train_batch_size: int = 4
@@ -75,6 +79,7 @@ class RLConfig:
 @dataclass
 class InferenceConfig:
     """Configuration for inference."""
+
     model_path: str = "./models/constraint-reasoner-v1"
     batch_size: int = 1
     max_new_tokens: int = 1024
@@ -88,6 +93,7 @@ class InferenceConfig:
 @dataclass
 class DeploymentConfig:
     """Configuration for deployment."""
+
     host: str = "0.0.0.0"
     port: int = 8000
     workers: int = 1
@@ -100,6 +106,7 @@ class DeploymentConfig:
 @dataclass
 class VerificationConfig:
     """Configuration for verification and validation."""
+
     enable_feasibility_check: bool = True
     enable_optimality_check: bool = True
     strict_format_validation: bool = True
@@ -109,6 +116,7 @@ class VerificationConfig:
 @dataclass
 class LoggingConfig:
     """Configuration for logging."""
+
     log_level: str = "INFO"
     log_format: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     log_file: Optional[str] = None
@@ -118,7 +126,7 @@ class LoggingConfig:
 
 class Config:
     """Main configuration class that aggregates all configs."""
-    
+
     def __init__(self):
         self.data = DataConfig()
         self.model = ModelConfig()
@@ -128,24 +136,23 @@ class Config:
         self.deployment = DeploymentConfig()
         self.verification = VerificationConfig()
         self.logging = LoggingConfig()
-    
+
     @classmethod
     def from_env(cls) -> "Config":
         """Create configuration from environment variables."""
         config = cls()
-        
+
         # Override with environment variables if present
         if os.getenv("MODEL_PATH"):
             config.inference.model_path = os.getenv("MODEL_PATH")
             config.deployment.model_path = os.getenv("MODEL_PATH")
-        
+
         if os.getenv("LOG_LEVEL"):
             config.logging.log_level = os.getenv("LOG_LEVEL")
             config.deployment.log_level = os.getenv("LOG_LEVEL").lower()
-        
+
         return config
 
 
 # Global configuration instance
 config = Config()
-

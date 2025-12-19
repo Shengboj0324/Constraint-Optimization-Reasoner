@@ -29,7 +29,9 @@ class ModelExporter:
         self.model_path = Path(model_path)
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
-        logger.info(f"Initialized ModelExporter: model={model_path}, output={output_dir}")
+        logger.info(
+            f"Initialized ModelExporter: model={model_path}, output={output_dir}"
+        )
 
     def create_model_card(
         self,
@@ -39,7 +41,7 @@ class ModelExporter:
         training_method: str = "SFT + GRPO",
         dataset_info: str = "Synthetic Knapsack Problems",
         metrics: Optional[Dict[str, float]] = None,
-        additional_info: Optional[Dict[str, Any]] = None
+        additional_info: Optional[Dict[str, Any]] = None,
     ) -> str:
         """
         Create a model card (README) for Kaggle Model.
@@ -140,7 +142,7 @@ Apache 2.0
         model_name: str,
         version: str = "1.0.0",
         tags: Optional[List[str]] = None,
-        **kwargs
+        **kwargs,
     ) -> str:
         """
         Create metadata.json for Kaggle Model.
@@ -156,7 +158,13 @@ Apache 2.0
         """
         logger.info("Creating metadata...")
 
-        tags = tags or ["optimization", "reasoning", "gemma", "tunix", "constraint-solving"]
+        tags = tags or [
+            "optimization",
+            "reasoning",
+            "gemma",
+            "tunix",
+            "constraint-solving",
+        ]
 
         metadata = {
             "name": model_name,
@@ -165,20 +173,18 @@ Apache 2.0
             "base_model": "google/gemma-2b",
             "tags": tags,
             "created_at": datetime.now().isoformat(),
-            **kwargs
+            **kwargs,
         }
 
         metadata_path = self.output_dir / "metadata.json"
-        with open(metadata_path, 'w') as f:
+        with open(metadata_path, "w") as f:
             json.dump(metadata, f, indent=2)
 
         logger.info(f"Metadata created at {metadata_path}")
         return str(metadata_path)
 
     def package_model(
-        self,
-        archive_name: Optional[str] = None,
-        include_source: bool = True
+        self, archive_name: Optional[str] = None, include_source: bool = True
     ) -> str:
         """
         Package the model into a zip archive for submission.
@@ -193,11 +199,13 @@ Apache 2.0
         logger.info("Packaging model...")
 
         if archive_name is None:
-            archive_name = f"constraint-reasoner-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+            archive_name = (
+                f"constraint-reasoner-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+            )
 
         archive_path = self.output_dir / f"{archive_name}.zip"
 
-        with zipfile.ZipFile(archive_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+        with zipfile.ZipFile(archive_path, "w", zipfile.ZIP_DEFLATED) as zipf:
             # Add model files
             if self.model_path.exists():
                 logger.info(f"Adding model files from {self.model_path}")
@@ -233,7 +241,7 @@ Apache 2.0
         model_name: str,
         description: str,
         metrics: Optional[Dict[str, float]] = None,
-        version: str = "1.0.0"
+        version: str = "1.0.0",
     ) -> Dict[str, str]:
         """
         Complete export workflow for Kaggle submission.
@@ -251,31 +259,23 @@ Apache 2.0
 
         # Create model card
         card_path = self.create_model_card(
-            model_name=model_name,
-            description=description,
-            metrics=metrics
+            model_name=model_name, description=description, metrics=metrics
         )
 
         # Create metadata
-        metadata_path = self.create_metadata(
-            model_name=model_name,
-            version=version
-        )
+        metadata_path = self.create_metadata(model_name=model_name, version=version)
 
         # Package everything
-        archive_path = self.package_model(
-            archive_name=f"{model_name}-v{version}"
-        )
+        archive_path = self.package_model(archive_name=f"{model_name}-v{version}")
 
         artifacts = {
             "model_card": card_path,
             "metadata": metadata_path,
             "archive": archive_path,
-            "output_dir": str(self.output_dir)
+            "output_dir": str(self.output_dir),
         }
 
         logger.info("Kaggle export complete!")
         logger.info(f"Artifacts: {artifacts}")
 
         return artifacts
-
