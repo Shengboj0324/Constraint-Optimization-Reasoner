@@ -1,12 +1,15 @@
+"""
+Constraint Optimization Reasoner API
+
+FastAPI service for solving constraint optimization problems with formal verification.
+Requires the 'src' package to be installed (pip install -e .).
+"""
+
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
-import sys
 import os
 
-# Add project root to path
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-sys.path.insert(0, project_root)
-
+# Import from installed package (no sys.path hacks!)
 from src.inference_engine import InferenceEngine
 from src.validation import ProblemValidator
 from src.logger import get_logger

@@ -25,18 +25,33 @@ This structure allows "Proof-Carrying Code" — the answer can be automatically 
 │   ├── data_loader.py             # Synthetic Data Gen + "Ground Truth" Logic with CoT
 │   ├── format_utils.py            # XML-like schema definitions
 │   ├── verifiers.py               # Deterministic Logic to verify model outputs
-│   └── rewards.py                 # Reward functions for GRPO (Format, Feasibility, Optimality)
-├── scripts/
-│   └── validate_workflow.py       # End-to-End integration test script
-├── tests/                         # Unit tests (pytest)
+│   ├── rewards.py                 # Reward functions for GRPO (Format, Feasibility, Optimality)
+│   ├── validation.py              # Input validation and data quality checks
+│   ├── inference_engine.py        # Production inference wrapper
+│   ├── export_utils.py            # Model export utilities
+│   ├── config.py                  # Centralized configuration
+│   └── logger.py                  # Logging utilities
+├── deployment/
+│   ├── app.py                     # FastAPI production service
+│   └── Dockerfile                 # Container configuration
+├── tests/                         # Unit tests (pytest) - 53 tests
+├── setup.py                       # Package installation
 └── requirements.txt               # Dependencies
 ```
 
 ## Installation
 
+**Important**: Install the package in editable mode to ensure proper imports:
+
 ```bash
+# Install dependencies
 pip install -r requirements.txt
-pip install "google-tunix[prod]" # Tunix specific installation
+
+# Install the project package (required!)
+pip install -e .
+
+# Optional: Install Tunix for training
+pip install "google-tunix[prod]"
 ```
 
 ## Workflow
