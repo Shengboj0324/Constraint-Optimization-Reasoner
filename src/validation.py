@@ -53,9 +53,14 @@ class ProblemValidator:
             capacity = int(cap_match.group(1))
             if capacity <= 0:
                 errors.append(f"Capacity must be positive, got {capacity}")
-            if capacity > 10000:
+            elif capacity > 100000:
+                # Hard limit to prevent DoS attacks via memory exhaustion
+                errors.append(
+                    f"Capacity too large ({capacity}). Maximum allowed is 100000 to prevent DoS"
+                )
+            elif capacity > 10000:
                 warnings.append(
-                    f"Very large capacity ({capacity}) may cause performance issues"
+                    f"Large capacity ({capacity}) may cause performance issues"
                 )
 
         # Check for items
@@ -64,13 +69,17 @@ class ProblemValidator:
             errors.append("Problem text must contain 'Available items: [...]'")
         else:
             try:
-                import ast
-
-                items = ast.literal_eval(items_match.group(1))
+                # Use JSON parsing for safety (instead of ast.literal_eval)
+                items = json.loads(items_match.group(1))
                 if not isinstance(items, list):
                     errors.append("Items must be a list")
                 elif len(items) == 0:
                     warnings.append("No items available in the problem")
+                elif len(items) > 1000:
+                    # Hard limit to prevent DoS attacks
+                    errors.append(
+                        f"Too many items ({len(items)}). Maximum allowed is 1000 to prevent DoS"
+                    )
                 elif len(items) > 100:
                     warnings.append(
                         f"Large number of items ({len(items)}) may cause performance issues"

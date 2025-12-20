@@ -83,19 +83,45 @@ def setup_logger(
 def get_logger(name: str) -> logging.Logger:
     """
     Get or create a logger with default configuration.
+    Handles both direct imports (e.g., 'data_loader') and package imports (e.g., 'src.data_loader').
 
     Args:
-        name: Logger name
+        name: Logger name (can be module.__name__)
 
     Returns:
-        Logger instance
+        Logger instance with proper configuration
     """
-    return logging.getLogger(name)
+    # Normalize logger name to handle both 'module' and 'src.module' formats
+    # Extract the base module name (last component)
+    base_name = name.split(".")[-1] if "." in name else name
+
+    # Check if logger already exists with configuration
+    logger = logging.getLogger(name)
+
+    # If logger has no handlers, set it up
+    if not logger.handlers:
+        logger = setup_logger(name, level="INFO")
+
+    return logger
 
 
-# Create default loggers for each module
+# Create default loggers for each module (both direct and package import names)
 data_logger = setup_logger("data_loader")
+setup_logger("src.data_loader")  # Also configure package import name
+
 verifier_logger = setup_logger("verifiers")
-inference_logger = setup_logger("inference")
+setup_logger("src.verifiers")
+
+inference_logger = setup_logger("inference_engine")
+setup_logger("src.inference_engine")
+
 rewards_logger = setup_logger("rewards")
+setup_logger("src.rewards")
+
 api_logger = setup_logger("api")
+setup_logger("deployment.app")
+
+# Configure other modules
+setup_logger("src.format_utils")
+setup_logger("src.validation")
+setup_logger("src.logger")

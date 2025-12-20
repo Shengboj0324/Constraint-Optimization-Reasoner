@@ -5,11 +5,23 @@ Provides deterministic verification of feasibility and optimality.
 
 import json
 import re
-import ast
-from typing import List, Dict, Any, Tuple
+import signal
+from typing import List, Dict, Any, Tuple, Optional
 from src.logger import get_logger
+from src.config import config
 
 logger = get_logger(__name__)
+
+
+class TimeoutError(Exception):
+    """Raised when verification exceeds timeout."""
+
+    pass
+
+
+def timeout_handler(signum, frame):
+    """Signal handler for timeout."""
+    raise TimeoutError("Verification timeout exceeded")
 
 
 class Verifier:
@@ -18,11 +30,35 @@ class Verifier:
     Provides methods to verify feasibility and optimality of solutions.
     """
 
+    def __init__(self, timeout: Optional[int] = None):
+        """
+        Initialize verifier.
+
+        Args:
+            timeout: Timeout in seconds for verification operations (uses config if None)
+        """
+        self.timeout = timeout or config.verification.timeout_seconds
+
     def verify_feasibility(self, problem_text: str, solution_data: str) -> bool:
         """
         Parses problem and solution, checks constraints.
         For Knapsack: Checks if total weight <= capacity.
+
+        Args:
+            problem_text: Problem description
+            solution_data: Solution as JSON string
+
+        Returns:
+            True if solution is feasible, False otherwise
         """
+        # Set timeout alarm (Unix only - gracefully handle on Windows)
+        try:
+            signal.signal(signal.SIGALRM, timeout_handler)
+            signal.alarm(self.timeout)
+        except (AttributeError, ValueError):
+            # Windows doesn't support SIGALRM, skip timeout
+            logger.debug("Timeout not supported on this platform")
+
         try:
             # Parse capacity from problem text
             cap_match = re.search(r"Knapsack capacity: (\d+)", problem_text)
@@ -32,11 +68,15 @@ class Verifier:
             capacity = int(cap_match.group(1))
             logger.debug(f"Parsed capacity: {capacity}")
 
-            # Parse items from problem text
+            # Parse items from problem text (using JSON for safety)
             items_match = re.search(r"Available items: (\[.*?\])", problem_text)
-            items: List[Dict[str, Any]] = (
-                ast.literal_eval(items_match.group(1)) if items_match else []
-            )
+            items: List[Dict[str, Any]] = []
+            if items_match:
+                try:
+                    items = json.loads(items_match.group(1))
+                except json.JSONDecodeError as e:
+                    logger.warning(f"Failed to parse items as JSON: {e}")
+                    return False
 
             item_map = {item["name"]: item for item in items}
 
@@ -73,15 +113,38 @@ class Verifier:
             )
             return True
 
+        except TimeoutError:
+            logger.error(f"Feasibility verification timeout after {self.timeout}s")
+            return False
         except Exception as e:
             logger.error(f"Verification error (Feasibility): {e}", exc_info=True)
             return False
+        finally:
+            # Cancel the alarm
+            try:
+                signal.alarm(0)
+            except (AttributeError, ValueError):
+                pass
 
     def verify_optimality(self, problem_text: str, solution_data: str) -> bool:
         """
         Verifies if the solution is optimal.
         For Knapsack, we solve it exactly to check.
+
+        Args:
+            problem_text: Problem description
+            solution_data: Solution as JSON string
+
+        Returns:
+            True if solution is optimal, False otherwise
         """
+        # Set timeout alarm (Unix only - gracefully handle on Windows)
+        try:
+            signal.signal(signal.SIGALRM, timeout_handler)
+            signal.alarm(self.timeout)
+        except (AttributeError, ValueError):
+            logger.debug("Timeout not supported on this platform")
+
         try:
             cap_match = re.search(r"Knapsack capacity: (\d+)", problem_text)
             if not cap_match:
@@ -89,9 +152,13 @@ class Verifier:
             capacity = int(cap_match.group(1))
 
             items_match = re.search(r"Available items: (\[.*?\])", problem_text)
-            items: List[Dict[str, Any]] = (
-                ast.literal_eval(items_match.group(1)) if items_match else []
-            )
+            items: List[Dict[str, Any]] = []
+            if items_match:
+                try:
+                    items = json.loads(items_match.group(1))
+                except json.JSONDecodeError as e:
+                    logger.warning(f"Failed to parse items as JSON: {e}")
+                    return False
 
             # Solve exactly using DP (same logic as ground truth, but independent implementation context)
             n = len(items)
@@ -128,6 +195,15 @@ class Verifier:
             )
             return True
 
+        except TimeoutError:
+            logger.error(f"Optimality verification timeout after {self.timeout}s")
+            return False
         except Exception as e:
             logger.error(f"Verification error (Optimality): {e}", exc_info=True)
             return False
+        finally:
+            # Cancel the alarm
+            try:
+                signal.alarm(0)
+            except (AttributeError, ValueError):
+                pass

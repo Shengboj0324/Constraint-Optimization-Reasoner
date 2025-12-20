@@ -5,7 +5,7 @@ Generates synthetic Knapsack problems with ground truth solutions and reasoning 
 
 import json
 import random
-from typing import List, Dict, Tuple, TypedDict, Any
+from typing import List, Dict, Tuple, TypedDict, Any, Optional
 from dataclasses import dataclass, asdict
 from src.logger import get_logger
 
@@ -43,18 +43,54 @@ class OptimizationDataset:
     Generates synthetic data with 'Proof-Carrying' reasoning traces.
     """
 
-    def __init__(self, size: int = 100, seed: int = 42):
+    def __init__(
+        self,
+        size: int = 100,
+        seed: int = 42,
+        min_capacity: Optional[int] = None,
+        max_capacity: Optional[int] = None,
+        num_items: Optional[int] = None,
+        min_item_weight: Optional[int] = None,
+        max_item_weight: Optional[int] = None,
+        min_item_value: Optional[int] = None,
+        max_item_value: Optional[int] = None,
+    ):
         """
         Initialize the dataset.
 
         Args:
             size: Number of problems to generate
             seed: Random seed for reproducibility
+            min_capacity: Minimum knapsack capacity (uses DataConfig if None)
+            max_capacity: Maximum knapsack capacity (uses DataConfig if None)
+            num_items: Number of items per problem (uses DataConfig if None)
+            min_item_weight: Minimum item weight (uses DataConfig if None)
+            max_item_weight: Maximum item weight (uses DataConfig if None)
+            min_item_value: Minimum item value (uses DataConfig if None)
+            max_item_value: Maximum item value (uses DataConfig if None)
         """
+        from src.config import config
+
         self.size = size
         self.seed = seed
+
+        # Use DataConfig values as defaults
+        self.min_capacity = min_capacity or config.data.min_capacity
+        self.max_capacity = max_capacity or config.data.max_capacity
+        self.num_items = num_items or config.data.num_items_per_problem
+        self.min_item_weight = min_item_weight or config.data.min_item_weight
+        self.max_item_weight = max_item_weight or config.data.max_item_weight
+        self.min_item_value = min_item_value or config.data.min_item_value
+        self.max_item_value = max_item_value or config.data.max_item_value
+
         random.seed(seed)
-        logger.info(f"Initializing OptimizationDataset with size={size}, seed={seed}")
+        logger.info(
+            f"Initializing OptimizationDataset with size={size}, seed={seed}, "
+            f"capacity=[{self.min_capacity}, {self.max_capacity}], "
+            f"num_items={self.num_items}, "
+            f"item_weight=[{self.min_item_weight}, {self.max_item_weight}], "
+            f"item_value=[{self.min_item_value}, {self.max_item_value}]"
+        )
         self.data: List[DatasetEntry] = self._generate_synthetic_data()
         logger.info(f"Successfully generated {len(self.data)} problems")
 
@@ -74,22 +110,44 @@ class OptimizationDataset:
             logger.warning(f"Large dataset size ({self.size}) may cause memory issues")
 
         data: List[DatasetEntry] = []
+
+        # Generate varied item names for better generalization
+        item_name_templates = [
+            lambda j: f"Item_{j}",
+            lambda j: chr(65 + j),  # A, B, C, ...
+            lambda j: f"item{j}",
+            lambda j: f"obj_{j}",
+        ]
+
         for i in range(self.size):
             # Generate valid capacity (avoid zero or negative)
-            capacity = random.randint(10, 50)
+            capacity = random.randint(self.min_capacity, self.max_capacity)
             if capacity <= 0:
-                capacity = 10  # Fallback to minimum valid capacity
+                capacity = self.min_capacity  # Fallback to minimum valid capacity
+
+            # Vary number of items for better generalization (3-5 items)
+            num_items_this_problem = self.num_items
+            if i % 4 == 0 and self.num_items < 5:  # 25% of problems have more items
+                num_items_this_problem = min(5, self.num_items + random.randint(0, 2))
+
+            # Randomize item naming for generalization
+            name_template = random.choice(item_name_templates)
 
             items: List[KnapsackItem] = []
-            for j in range(3):
+            for j in range(num_items_this_problem):
                 # Ensure positive weights and values
-                weight = max(1, random.randint(1, 15))
-                value = max(1, random.randint(10, 100))
-                items.append(KnapsackItem(name=f"Item_{j}", weight=weight, value=value))
+                weight = max(
+                    1, random.randint(self.min_item_weight, self.max_item_weight)
+                )
+                value = max(1, random.randint(self.min_item_value, self.max_item_value))
+                items.append(
+                    KnapsackItem(name=name_template(j), weight=weight, value=value)
+                )
 
-            # Serialize for prompt
+            # Serialize for prompt using JSON (safer than Python literal syntax)
             items_dict = [asdict(item) for item in items]
-            problem_text = f"Knapsack capacity: {capacity}. Available items: {items_dict}. Select items to maximize value without exceeding capacity."
+            items_json = json.dumps(items_dict)
+            problem_text = f"Knapsack capacity: {capacity}. Available items: {items_json}. Select items to maximize value without exceeding capacity."
 
             # Solve it
             solution, reasoning, validation = self._solve_knapsack(capacity, items)
