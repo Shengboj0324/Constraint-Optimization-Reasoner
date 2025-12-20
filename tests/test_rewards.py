@@ -3,14 +3,13 @@ Tests for rewards module.
 """
 
 import pytest
-import sys
-import os
 import json
 
-# Add src to path
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../src")))
-
-from rewards import format_reward_func, feasibility_reward_func, optimality_reward_func
+from src.rewards import (
+    format_reward_func,
+    feasibility_reward_func,
+    optimality_reward_func,
+)
 
 
 def test_format_reward_func_valid():
@@ -80,7 +79,7 @@ def test_feasibility_reward_func_valid():
     """Test feasibility reward function with valid solution."""
     prompts = [
         """Problem:
-Knapsack capacity: 10. Available items: [{'name': 'A', 'weight': 5, 'value': 10}]"""
+Knapsack capacity: 10. Available items: [{"name": "A", "weight": 5, "value": 10}]"""
     ]
 
     completions = [
@@ -100,7 +99,7 @@ def test_feasibility_reward_func_invalid():
     """Test feasibility reward function with infeasible solution."""
     prompts = [
         """Problem:
-Knapsack capacity: 5. Available items: [{'name': 'A', 'weight': 10, 'value': 10}]"""
+Knapsack capacity: 5. Available items: [{"name": "A", "weight": 10, "value": 10}]"""
     ]
 
     completions = [
@@ -120,7 +119,7 @@ def test_optimality_reward_func_optimal():
     """Test optimality reward function with optimal solution."""
     prompts = [
         """Problem:
-Knapsack capacity: 10. Available items: [{'name': 'A', 'weight': 5, 'value': 10}, {'name': 'B', 'weight': 6, 'value': 12}]"""
+Knapsack capacity: 10. Available items: [{"name": "A", "weight": 5, "value": 10}, {"name": "B", "weight": 6, "value": 12}]"""
     ]
 
     completions = [
@@ -140,7 +139,7 @@ def test_optimality_reward_func_suboptimal():
     """Test optimality reward function with suboptimal solution."""
     prompts = [
         """Problem:
-Knapsack capacity: 10. Available items: [{'name': 'A', 'weight': 5, 'value': 10}, {'name': 'B', 'weight': 6, 'value': 12}]"""
+Knapsack capacity: 10. Available items: [{"name": "A", "weight": 5, "value": 10}, {"name": "B", "weight": 6, "value": 12}]"""
     ]
 
     completions = [

@@ -3,18 +3,13 @@ Tests for validation module.
 """
 
 import pytest
-import sys
-import os
 
-# Add src to path
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../src")))
-
-from validation import ProblemValidator, OutputValidator, ValidationResult
+from src.validation import ProblemValidator, OutputValidator, ValidationResult
 
 
 def test_problem_validator_valid():
     """Test validation of valid problem text."""
-    problem = "Knapsack capacity: 10. Available items: [{'name': 'A', 'weight': 5, 'value': 10}]"
+    problem = 'Knapsack capacity: 10. Available items: [{"name": "A", "weight": 5, "value": 10}]'
     result = ProblemValidator.validate_problem_text(problem)
 
     assert result.is_valid
@@ -23,7 +18,7 @@ def test_problem_validator_valid():
 
 def test_problem_validator_missing_capacity():
     """Test validation with missing capacity."""
-    problem = "Available items: [{'name': 'A', 'weight': 5, 'value': 10}]"
+    problem = 'Available items: [{"name": "A", "weight": 5, "value": 10}]'
     result = ProblemValidator.validate_problem_text(problem)
 
     assert not result.is_valid
@@ -41,7 +36,7 @@ def test_problem_validator_missing_items():
 
 def test_problem_validator_invalid_capacity():
     """Test validation with invalid capacity."""
-    problem = "Knapsack capacity: 0. Available items: [{'name': 'A', 'weight': 5, 'value': 10}]"
+    problem = 'Knapsack capacity: 0. Available items: [{"name": "A", "weight": 5, "value": 10}]'
     result = ProblemValidator.validate_problem_text(problem)
 
     assert not result.is_valid
@@ -59,11 +54,13 @@ def test_problem_validator_empty_items():
 
 def test_problem_validator_invalid_item_structure():
     """Test validation with invalid item structure."""
-    problem = "Knapsack capacity: 10. Available items: [{'name': 'A'}]"
+    problem = 'Knapsack capacity: 10. Available items: [{"name": "A"}]'
     result = ProblemValidator.validate_problem_text(problem)
 
     assert not result.is_valid
-    assert any("weight" in err.lower() or "value" in err.lower() for err in result.errors)
+    assert any(
+        "weight" in err.lower() or "value" in err.lower() for err in result.errors
+    )
 
 
 def test_solution_validator_valid():
@@ -164,4 +161,3 @@ def test_validation_result_bool():
 
     assert bool(valid_result) is True
     assert bool(invalid_result) is False
-

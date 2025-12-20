@@ -1,12 +1,7 @@
 import pytest
-import sys
-import os
 import json
 
-# Add src to path
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../src")))
-
-from data_loader import OptimizationDataset
+from src.data_loader import OptimizationDataset
 
 
 def test_dataset_generation():
@@ -51,7 +46,7 @@ def test_solution_validity():
 def test_knapsack_solver_correctness():
     """Test the internal solver with a known simple case."""
     ds = OptimizationDataset(size=1)
-    from data_loader import KnapsackItem
+    from src.data_loader import KnapsackItem
 
     # Manually call solver
     # Case: Cap 10, Item A (5, 10), Item B (6, 12).

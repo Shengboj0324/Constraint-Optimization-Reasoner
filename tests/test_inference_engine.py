@@ -3,16 +3,12 @@ Tests for inference_engine module.
 """
 
 import pytest
-import sys
-import os
 import tempfile
-
-# Add src to path
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../src")))
+import os
 
 # Import with error handling for JAX issues
 try:
-    from inference_engine import InferenceEngine, MockInference
+    from src.inference_engine import InferenceEngine, MockInference
 except (ImportError, RuntimeError, AttributeError) as e:
     pytest.skip(f"Cannot import inference_engine: {e}", allow_module_level=True)
 
@@ -48,7 +44,8 @@ def test_inference_engine_solve():
         non_existent_path = os.path.join(tmpdir, "non_existent_model")
         engine = InferenceEngine(non_existent_path)
 
-        problem = "Knapsack capacity: 10. Available items: [{'name': 'Item_0', 'weight': 5, 'value': 10}]"
+        # Use JSON format (double quotes) instead of Python dict syntax
+        problem = 'Knapsack capacity: 10. Available items: [{"name": "Item_0", "weight": 5, "value": 10}]'
         result = engine.solve(problem)
 
         assert "raw_output" in result
@@ -72,7 +69,8 @@ def test_inference_engine_solve_verification():
         engine = InferenceEngine(non_existent_path)
 
         # MockInference returns ["Item_0"] which should be valid for this problem
-        problem = "Knapsack capacity: 10. Available items: [{'name': 'Item_0', 'weight': 5, 'value': 10}]"
+        # Use JSON format (double quotes) instead of Python dict syntax
+        problem = 'Knapsack capacity: 10. Available items: [{"name": "Item_0", "weight": 5, "value": 10}]'
         result = engine.solve(problem)
 
         # The mock output should be feasible
@@ -85,9 +83,10 @@ def test_inference_engine_solve_multiple_problems():
         non_existent_path = os.path.join(tmpdir, "non_existent_model")
         engine = InferenceEngine(non_existent_path)
 
+        # Use JSON format (double quotes) instead of Python dict syntax
         problems = [
-            "Knapsack capacity: 10. Available items: [{'name': 'Item_0', 'weight': 5, 'value': 10}]",
-            "Knapsack capacity: 20. Available items: [{'name': 'Item_0', 'weight': 10, 'value': 20}]",
+            'Knapsack capacity: 10. Available items: [{"name": "Item_0", "weight": 5, "value": 10}]',
+            'Knapsack capacity: 20. Available items: [{"name": "Item_0", "weight": 10, "value": 20}]',
         ]
 
         for problem in problems:
@@ -116,8 +115,8 @@ def test_inference_engine_verifier_integration():
         # Verifier should be initialized
         assert engine.verifier is not None
 
-        # Test with a problem
-        problem = "Knapsack capacity: 10. Available items: [{'name': 'Item_0', 'weight': 5, 'value': 10}]"
+        # Test with a problem - use JSON format (double quotes)
+        problem = 'Knapsack capacity: 10. Available items: [{"name": "Item_0", "weight": 5, "value": 10}]'
         result = engine.solve(problem)
 
         # Verification should have been performed

@@ -3,13 +3,8 @@ Tests for format_utils module.
 """
 
 import pytest
-import sys
-import os
 
-# Add src to path
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../src")))
-
-from format_utils import format_input, parse_output, PROMPT_TEMPLATE
+from src.format_utils import format_input, parse_output, PROMPT_TEMPLATE
 
 
 def test_format_input():
