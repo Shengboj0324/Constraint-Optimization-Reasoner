@@ -17,6 +17,7 @@ from src.rewards import (
     format_reward_func,
     feasibility_reward_func,
     optimality_reward_func,
+    brevity_reward_func,
 )
 from src.inference_engine import InferenceEngine, MockInference
 from src.config import Config
@@ -42,6 +43,7 @@ __all__ = [
     "format_reward_func",
     "feasibility_reward_func",
     "optimality_reward_func",
+    "brevity_reward_func",
     "InferenceEngine",
     "MockInference",
     "Config",

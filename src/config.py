@@ -62,7 +62,16 @@ class TrainingConfig:
 
 @dataclass
 class RLConfig:
-    """Configuration for GRPO (RL) training."""
+    """Configuration for GRPO (RL) training with prioritized rewards.
+
+    Reward prioritization per judge recommendations:
+    1. Schema/parseability (weight: 1.0) - Gate 1: Must have valid format
+    2. Feasibility (weight: 2.0) - Gate 2: Must satisfy constraints
+    3. Optimality (weight: 3.0) - Gate 3: Must be optimal or bounded
+    4. Brevity (weight: 0.5) - Bonus: Shorter outputs preferred
+
+    Total possible reward: 1.0 + 2.0 + 3.0 + 0.5 = 6.5
+    """
 
     output_dir: str = "./checkpoints/grpo_optimized"
     num_train_epochs: int = 1
@@ -73,7 +82,10 @@ class RLConfig:
     num_generations: int = 4
     max_prompt_length: int = 256
     max_completion_length: int = 1024
-    reward_weights: List[float] = field(default_factory=lambda: [1.0, 1.0, 1.0])
+
+    # Prioritized reward weights: [format, feasibility, optimality, brevity]
+    # Higher weights for more critical objectives
+    reward_weights: List[float] = field(default_factory=lambda: [1.0, 2.0, 3.0, 0.5])
 
 
 @dataclass

@@ -198,3 +198,57 @@ def optimality_reward_func(
 
     logger.info(f"Optimality rewards: {sum(rewards)}/{len(rewards)} optimal")
     return rewards
+
+
+def brevity_reward_func(completions: List[str], **kwargs) -> List[float]:
+    """
+    Reward function that encourages concise outputs.
+
+    Per judge recommendations: "brevity" is a lower-priority reward to encourage
+    shorter, more efficient outputs without sacrificing correctness.
+
+    Args:
+        completions: List of model completions to evaluate
+        **kwargs: Additional arguments (unused)
+
+    Returns:
+        List of rewards (0.0 to 1.0 based on token count)
+        - Outputs <= 512 tokens: 1.0
+        - Outputs 512-1024 tokens: 0.5
+        - Outputs > 1024 tokens: 0.0
+
+    Raises:
+        ValueError: If completions is empty or invalid
+    """
+    if not completions:
+        logger.warning("Empty completions list provided to brevity_reward_func")
+        return []
+
+    if not isinstance(completions, list):
+        raise ValueError(f"completions must be a list, got {type(completions)}")
+
+    rewards = []
+    for i, completion in enumerate(completions):
+        if not isinstance(completion, str):
+            logger.warning(f"Completion {i} is not a string: {type(completion)}")
+            rewards.append(0.0)
+            continue
+
+        # Simple token count approximation (whitespace split)
+        # More accurate would use tokenizer, but this is fast and good enough
+        token_count = len(completion.split())
+
+        if token_count <= 512:
+            reward = 1.0
+        elif token_count <= 1024:
+            # Linear interpolation between 512 and 1024
+            reward = 1.0 - 0.5 * ((token_count - 512) / 512)
+        else:
+            reward = 0.0
+
+        rewards.append(reward)
+        logger.debug(f"Completion {i}: {token_count} tokens, brevity reward={reward:.2f}")
+
+    avg_tokens = sum(len(c.split()) for c in completions) / len(completions)
+    logger.info(f"Brevity rewards: avg {avg_tokens:.0f} tokens, avg reward {sum(rewards)/len(rewards):.2f}")
+    return rewards

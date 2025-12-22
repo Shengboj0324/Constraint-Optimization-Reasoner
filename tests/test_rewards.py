@@ -9,6 +9,7 @@ from src.rewards import (
     format_reward_func,
     feasibility_reward_func,
     optimality_reward_func,
+    brevity_reward_func,
 )
 
 
@@ -168,3 +169,55 @@ Knapsack capacity: 10. Available items: [{"name": "A", "weight": 5, "value": 10}
 
     assert len(rewards) == 1
     assert rewards[0] == 0.0
+
+
+def test_brevity_reward_func_short():
+    """Test brevity reward function with short output."""
+    # Short completion (< 512 tokens)
+    short_text = " ".join(["word"] * 100)  # 100 tokens
+    completions = [short_text]
+
+    rewards = brevity_reward_func(completions)
+
+    assert len(rewards) == 1
+    assert rewards[0] == 1.0
+
+
+def test_brevity_reward_func_medium():
+    """Test brevity reward function with medium output."""
+    # Medium completion (512-1024 tokens)
+    medium_text = " ".join(["word"] * 700)  # 700 tokens
+    completions = [medium_text]
+
+    rewards = brevity_reward_func(completions)
+
+    assert len(rewards) == 1
+    assert 0.0 < rewards[0] < 1.0  # Should be between 0 and 1
+
+
+def test_brevity_reward_func_long():
+    """Test brevity reward function with long output."""
+    # Long completion (> 1024 tokens)
+    long_text = " ".join(["word"] * 1500)  # 1500 tokens
+    completions = [long_text]
+
+    rewards = brevity_reward_func(completions)
+
+    assert len(rewards) == 1
+    assert rewards[0] == 0.0
+
+
+def test_brevity_reward_func_multiple():
+    """Test brevity reward function with multiple completions."""
+    completions = [
+        " ".join(["word"] * 100),   # Short: 1.0
+        " ".join(["word"] * 700),   # Medium: 0.0-1.0
+        " ".join(["word"] * 1500),  # Long: 0.0
+    ]
+
+    rewards = brevity_reward_func(completions)
+
+    assert len(rewards) == 3
+    assert rewards[0] == 1.0
+    assert 0.0 < rewards[1] < 1.0
+    assert rewards[2] == 0.0
