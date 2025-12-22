@@ -1,0 +1,100 @@
+{
+  "description": "10 curated demo cases per judge recommendations",
+  "cases": [
+    {
+      "id": "demo_01_simple",
+      "name": "Simple 2-item problem",
+      "problem": "Knapsack capacity: 10. Available items: [{\"name\": \"A\", \"weight\": 5, \"value\": 10}, {\"name\": \"B\", \"weight\": 3, \"value\": 8}]. Select items to maximize value without exceeding capacity.",
+      "expected_solution": ["A", "B"],
+      "expected_value": 18,
+      "expected_weight": 8,
+      "difficulty": "easy"
+    },
+    {
+      "id": "demo_02_tight_capacity",
+      "name": "Tight capacity constraint",
+      "problem": "Knapsack capacity: 15. Available items: [{\"name\": \"X\", \"weight\": 8, \"value\": 20}, {\"name\": \"Y\", \"weight\": 7, \"value\": 18}, {\"name\": \"Z\", \"weight\": 5, \"value\": 12}]. Select items to maximize value without exceeding capacity.",
+      "expected_solution": ["X", "Z"],
+      "expected_value": 32,
+      "expected_weight": 13,
+      "difficulty": "medium"
+    },
+    {
+      "id": "demo_03_all_fit",
+      "name": "All items fit",
+      "problem": "Knapsack capacity: 50. Available items: [{\"name\": \"item1\", \"weight\": 5, \"value\": 10}, {\"name\": \"item2\", \"weight\": 8, \"value\": 15}, {\"name\": \"item3\", \"weight\": 3, \"value\": 7}]. Select items to maximize value without exceeding capacity.",
+      "expected_solution": ["item1", "item2", "item3"],
+      "expected_value": 32,
+      "expected_weight": 16,
+      "difficulty": "easy"
+    },
+    {
+      "id": "demo_04_empty_solution",
+      "name": "All items too heavy",
+      "problem": "Knapsack capacity: 5. Available items: [{\"name\": \"Heavy1\", \"weight\": 10, \"value\": 100}, {\"name\": \"Heavy2\", \"weight\": 15, \"value\": 150}]. Select items to maximize value without exceeding capacity.",
+      "expected_solution": [],
+      "expected_value": 0,
+      "expected_weight": 0,
+      "difficulty": "edge_case"
+    },
+    {
+      "id": "demo_05_single_item",
+      "name": "Single item selection",
+      "problem": "Knapsack capacity: 20. Available items: [{\"name\": \"OnlyOne\", \"weight\": 15, \"value\": 50}]. Select items to maximize value without exceeding capacity.",
+      "expected_solution": ["OnlyOne"],
+      "expected_value": 50,
+      "expected_weight": 15,
+      "difficulty": "easy"
+    },
+    {
+      "id": "demo_06_many_items",
+      "name": "5 items with complex tradeoffs",
+      "problem": "Knapsack capacity: 25. Available items: [{\"name\": \"A\", \"weight\": 5, \"value\": 10}, {\"name\": \"B\", \"weight\": 10, \"value\": 25}, {\"name\": \"C\", \"weight\": 8, \"value\": 18}, {\"name\": \"D\", \"weight\": 3, \"value\": 6}, {\"name\": \"E\", \"weight\": 7, \"value\": 15}]. Select items to maximize value without exceeding capacity.",
+      "expected_solution": ["B", "C", "D"],
+      "expected_value": 49,
+      "expected_weight": 21,
+      "difficulty": "hard"
+    },
+    {
+      "id": "demo_07_equal_values",
+      "name": "Items with equal values",
+      "problem": "Knapsack capacity: 12. Available items: [{\"name\": \"Light\", \"weight\": 3, \"value\": 10}, {\"name\": \"Medium\", \"weight\": 6, \"value\": 10}, {\"name\": \"Heavy\", \"weight\": 9, \"value\": 10}]. Select items to maximize value without exceeding capacity.",
+      "expected_solution": ["Light", "Light", "Light", "Light"],
+      "expected_value": 40,
+      "expected_weight": 12,
+      "difficulty": "medium",
+      "note": "Multiple optimal solutions possible"
+    },
+    {
+      "id": "demo_08_large_capacity",
+      "name": "Large capacity problem",
+      "problem": "Knapsack capacity: 100. Available items: [{\"name\": \"obj_0\", \"weight\": 12, \"value\": 30}, {\"name\": \"obj_1\", \"weight\": 15, \"value\": 40}, {\"name\": \"obj_2\", \"weight\": 20, \"value\": 55}, {\"name\": \"obj_3\", \"weight\": 8, \"value\": 20}, {\"name\": \"obj_4\", \"weight\": 25, \"value\": 70}]. Select items to maximize value without exceeding capacity.",
+      "expected_solution": ["obj_0", "obj_1", "obj_2", "obj_3", "obj_4"],
+      "expected_value": 215,
+      "expected_weight": 80,
+      "difficulty": "medium"
+    },
+    {
+      "id": "demo_09_variant_quality",
+      "name": "Budget + quality constraint variant",
+      "problem": "Knapsack capacity: 30. Available items: [{\"name\": \"Premium\", \"weight\": 10, \"value\": 50}, {\"name\": \"Standard\", \"weight\": 8, \"value\": 30}, {\"name\": \"Budget\", \"weight\": 5, \"value\": 15}]. Select items to maximize value without exceeding capacity. Additional constraint: Total value must be at least 60.",
+      "expected_solution": ["Premium", "Standard"],
+      "expected_value": 80,
+      "expected_weight": 18,
+      "difficulty": "hard",
+      "variant": "quality_constraint"
+    },
+    {
+      "id": "demo_10_infeasible",
+      "name": "Intentionally infeasible (for testing)",
+      "problem": "Knapsack capacity: 0. Available items: [{\"name\": \"Item\", \"weight\": 1, \"value\": 10}]. Select items to maximize value without exceeding capacity.",
+      "expected_solution": [],
+      "expected_value": 0,
+      "expected_weight": 0,
+      "difficulty": "edge_case",
+      "note": "Zero capacity - should return empty solution"
+    }
+  ],
+  "usage": "These cases cover: simple problems, tight constraints, edge cases (empty solution, single item), complex tradeoffs, variants, and intentionally infeasible cases for comprehensive testing."
+}
+

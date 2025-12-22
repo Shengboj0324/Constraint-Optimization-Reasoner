@@ -8,20 +8,32 @@ Defines the schema for:
 PROMPT_TEMPLATE = """
 You are a constraint optimization expert. Given the following problem, strictly follow this format:
 
+<parse>
+[Parse the problem into canonical JSON format with capacity and items]
+</parse>
+
 <reasoning>
 [Your step-by-step checking and solving process]
 </reasoning>
 
+<solution>
+[Selected items as JSON list with totals: total_weight, total_value]
+</solution>
+
 <feasibility_certificate>
-[List each constraint and verify if the solution satisfies it]
+[Verify each constraint: weight_check, capacity_check, item_validity]
 </feasibility_certificate>
 
 <optimality_certificate>
-[Explain why this solution is optimal or provide a bound]
+[Prove optimality or provide bound. Include: computed_optimum, status (OPTIMAL/BOUNDED), gap_if_any]
 </optimality_certificate>
 
+<final>
+[Executive summary: solution quality, verification status, confidence]
+</final>
+
 <answer>
-[Final answer]
+[Final answer as JSON list of selected item names]
 </answer>
 
 Problem:
@@ -44,14 +56,19 @@ def format_input(problem_text: str) -> str:
 
 def parse_output(output_text: str) -> dict:
     """
-    Parses the model output into components.
+    Parses the model output into components with enhanced schema validation.
 
     Args:
         output_text: The raw model output
 
     Returns:
-        Dictionary with keys: reasoning, feasibility_certificate,
-        optimality_certificate, answer. Values are None if tag not found.
+        Dictionary with keys: parse, reasoning, solution, feasibility_certificate,
+        optimality_certificate, final, answer. Values are None if tag not found.
+
+        Enhanced fields:
+        - parse: Canonical JSON problem representation
+        - solution: Selected items with totals (total_weight, total_value)
+        - final: Executive summary with verification status
 
     Raises:
         ValueError: If output_text is too long (>1MB) to prevent ReDoS attacks
@@ -65,10 +82,14 @@ def parse_output(output_text: str) -> dict:
             f"Output text too long: {len(output_text)} bytes (max: {MAX_OUTPUT_LENGTH})"
         )
 
+    # Enhanced schema with all required tags per judge recommendations
     patterns = {
+        "parse": r"<parse>(.*?)</parse>",
         "reasoning": r"<reasoning>(.*?)</reasoning>",
+        "solution": r"<solution>(.*?)</solution>",
         "feasibility_certificate": r"<feasibility_certificate>(.*?)</feasibility_certificate>",
         "optimality_certificate": r"<optimality_certificate>(.*?)</optimality_certificate>",
+        "final": r"<final>(.*?)</final>",
         "answer": r"<answer>(.*?)</answer>",
     }
 

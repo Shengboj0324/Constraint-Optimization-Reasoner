@@ -13,17 +13,26 @@ from src.rewards import (
 
 
 def test_format_reward_func_valid():
-    """Test format reward function with valid outputs."""
+    """Test format reward function with valid outputs (enhanced schema)."""
     completions = [
-        """<reasoning>
+        """<parse>
+{"capacity": 10, "items": []}
+</parse>
+<reasoning>
 Step 1
 </reasoning>
+<solution>
+{"selected": ["A"], "total_weight": 5, "total_value": 10}
+</solution>
 <feasibility_certificate>
 Valid
 </feasibility_certificate>
 <optimality_certificate>
 Optimal
 </optimality_certificate>
+<final>
+Summary
+</final>
 <answer>
 ["A"]
 </answer>"""
@@ -53,17 +62,23 @@ Step 1
 
 
 def test_format_reward_func_multiple():
-    """Test format reward function with multiple completions."""
+    """Test format reward function with multiple completions (enhanced schema)."""
     completions = [
-        """<reasoning>R</reasoning>
+        """<parse>P</parse>
+<reasoning>R</reasoning>
+<solution>S</solution>
 <feasibility_certificate>F</feasibility_certificate>
 <optimality_certificate>O</optimality_certificate>
+<final>F</final>
 <answer>A</answer>""",
         """<reasoning>R</reasoning>
-<answer>A</answer>""",  # Invalid
-        """<reasoning>R</reasoning>
+<answer>A</answer>""",  # Invalid - missing tags
+        """<parse>P</parse>
+<reasoning>R</reasoning>
+<solution>S</solution>
 <feasibility_certificate>F</feasibility_certificate>
 <optimality_certificate>O</optimality_certificate>
+<final>F</final>
 <answer>A</answer>""",
     ]
 

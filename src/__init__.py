@@ -12,7 +12,7 @@ from src.data_loader import (
     VerificationResult,
 )
 from src.format_utils import format_input, parse_output, PROMPT_TEMPLATE
-from src.verifiers import Verifier
+from src.verifiers import Verifier, DetailedVerificationResult
 from src.rewards import (
     format_reward_func,
     feasibility_reward_func,
@@ -27,6 +27,7 @@ from src.validation import (
     ValidationResult as ValidResult,
 )
 from src.export_utils import ModelExporter
+from src.benchmark import BenchmarkSuite, BenchmarkMetrics
 
 __all__ = [
     "OptimizationDataset",
@@ -37,6 +38,7 @@ __all__ = [
     "parse_output",
     "PROMPT_TEMPLATE",
     "Verifier",
+    "DetailedVerificationResult",
     "format_reward_func",
     "feasibility_reward_func",
     "optimality_reward_func",
@@ -49,4 +51,6 @@ __all__ = [
     "OutputValidator",
     "ValidResult",
     "ModelExporter",
+    "BenchmarkSuite",
+    "BenchmarkMetrics",
 ]

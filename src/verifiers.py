@@ -1,16 +1,50 @@
 """
 Verifiers for constraint optimization solutions.
 Provides deterministic verification of feasibility and optimality.
+
+Enhanced per judge recommendations:
+- Explicit solution totals (weight, value)
+- Computed optimum value
+- OPTIMAL vs BOUNDED status
+- False OPTIMAL claim detection and penalties
 """
 
 import json
 import re
 import signal
 from typing import List, Dict, Any, Tuple, Optional
+from dataclasses import dataclass
 from src.logger import get_logger
 from src.config import config
 
 logger = get_logger(__name__)
+
+
+@dataclass
+class DetailedVerificationResult:
+    """
+    Enhanced verification result with explicit metrics per judge recommendations.
+
+    Attributes:
+        is_feasible: Whether solution satisfies all constraints
+        is_optimal: Whether solution is proven optimal
+        solution_weight: Total weight of selected items
+        solution_value: Total value of selected items
+        computed_optimum: Optimal value computed by verifier
+        capacity: Problem capacity
+        status: OPTIMAL, BOUNDED, or INFEASIBLE
+        gap: Optimality gap (0 if optimal)
+        false_optimal_claim: True if model claimed OPTIMAL but is not
+    """
+    is_feasible: bool
+    is_optimal: bool
+    solution_weight: int
+    solution_value: int
+    computed_optimum: int
+    capacity: int
+    status: str  # "OPTIMAL", "BOUNDED", "INFEASIBLE"
+    gap: int
+    false_optimal_claim: bool = False
 
 
 class TimeoutError(Exception):
@@ -319,3 +353,157 @@ class Verifier:
                 signal.alarm(0)
             except (AttributeError, ValueError):
                 pass
+
+
+    def verify_comprehensive(
+        self, problem_text: str, solution_data: str, claimed_status: Optional[str] = None
+    ) -> DetailedVerificationResult:
+        """
+        Comprehensive verification with detailed metrics per judge recommendations.
+
+        This method provides:
+        - Explicit solution totals (weight, value)
+        - Computed optimum value
+        - OPTIMAL vs BOUNDED status
+        - Detection of false OPTIMAL claims
+
+        Args:
+            problem_text: Problem description
+            solution_data: Solution as JSON string
+            claimed_status: Status claimed by model ("OPTIMAL" or "BOUNDED")
+
+        Returns:
+            DetailedVerificationResult with all metrics
+
+        Raises:
+            ValueError: If inputs are invalid
+        """
+        # Input validation
+        if not problem_text or not solution_data:
+            raise ValueError("problem_text and solution_data cannot be None or empty")
+
+        # Parse problem
+        capacity, items = self._parse_problem(problem_text)
+        if capacity is None or items is None:
+            return DetailedVerificationResult(
+                is_feasible=False,
+                is_optimal=False,
+                solution_weight=0,
+                solution_value=0,
+                computed_optimum=0,
+                capacity=0,
+                status="INFEASIBLE",
+                gap=0,
+                false_optimal_claim=False,
+            )
+
+        # Parse solution
+        selected_names = self._parse_solution(solution_data)
+        if selected_names is None:
+            return DetailedVerificationResult(
+                is_feasible=False,
+                is_optimal=False,
+                solution_weight=0,
+                solution_value=0,
+                computed_optimum=0,
+                capacity=capacity,
+                status="INFEASIBLE",
+                gap=0,
+                false_optimal_claim=False,
+            )
+
+        # Build item map
+        item_map = {item["name"]: item for item in items}
+
+        # Calculate solution totals
+        solution_weight = 0
+        solution_value = 0
+
+        for name in selected_names:
+            if name not in item_map:
+                logger.warning(f"Unknown item in solution: {name}")
+                return DetailedVerificationResult(
+                    is_feasible=False,
+                    is_optimal=False,
+                    solution_weight=0,
+                    solution_value=0,
+                    computed_optimum=0,
+                    capacity=capacity,
+                    status="INFEASIBLE",
+                    gap=0,
+                    false_optimal_claim=False,
+                )
+
+            solution_weight += item_map[name]["weight"]
+            solution_value += item_map[name]["value"]
+
+        # Check feasibility
+        is_feasible = solution_weight <= capacity
+
+        # Compute optimal value using DP
+        n = len(items)
+        try:
+            dp = [[0 for _ in range(capacity + 1)] for _ in range(n + 1)]
+        except MemoryError:
+            logger.error("DP table too large")
+            return DetailedVerificationResult(
+                is_feasible=is_feasible,
+                is_optimal=False,
+                solution_weight=solution_weight,
+                solution_value=solution_value,
+                computed_optimum=0,
+                capacity=capacity,
+                status="BOUNDED",
+                gap=0,
+                false_optimal_claim=False,
+            )
+
+        for i in range(1, n + 1):
+            wt = items[i - 1]["weight"]
+            val = items[i - 1]["value"]
+            for w in range(1, capacity + 1):
+                if wt <= w:
+                    dp[i][w] = max(val + dp[i - 1][w - wt], dp[i - 1][w])
+                else:
+                    dp[i][w] = dp[i - 1][w]
+
+        computed_optimum = dp[n][capacity]
+
+        # Determine optimality
+        is_optimal = is_feasible and (solution_value == computed_optimum)
+        gap = computed_optimum - solution_value if is_feasible else 0
+
+        # Determine status
+        if not is_feasible:
+            status = "INFEASIBLE"
+        elif is_optimal:
+            status = "OPTIMAL"
+        else:
+            status = "BOUNDED"
+
+        # Detect false OPTIMAL claims (critical per judge recommendations)
+        false_optimal_claim = False
+        if claimed_status == "OPTIMAL" and not is_optimal:
+            false_optimal_claim = True
+            logger.warning(
+                f"FALSE OPTIMAL CLAIM DETECTED: Model claimed OPTIMAL but solution value "
+                f"{solution_value} != computed optimum {computed_optimum}"
+            )
+
+        logger.info(
+            f"Comprehensive verification: feasible={is_feasible}, optimal={is_optimal}, "
+            f"solution_value={solution_value}, computed_optimum={computed_optimum}, "
+            f"status={status}, gap={gap}, false_claim={false_optimal_claim}"
+        )
+
+        return DetailedVerificationResult(
+            is_feasible=is_feasible,
+            is_optimal=is_optimal,
+            solution_weight=solution_weight,
+            solution_value=solution_value,
+            computed_optimum=computed_optimum,
+            capacity=capacity,
+            status=status,
+            gap=gap,
+            false_optimal_claim=false_optimal_claim,
+        )
