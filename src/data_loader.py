@@ -5,6 +5,7 @@ Generates synthetic Knapsack problems with ground truth solutions and reasoning 
 
 import json
 import random
+import numpy as np
 from typing import List, Dict, Tuple, TypedDict, Any, Optional
 from dataclasses import dataclass, asdict
 from src.logger import get_logger
@@ -280,23 +281,41 @@ Selected {len(solution)} items with total value {total_value} and weight {total_
                 raise ValueError(f"Item {item.name} has invalid value: {item.value}")
 
         n = len(items)
-        # dp[i][w] = max value with first i items and capacity w
+        n = len(items)
+        
+        # Initialize DP table (0 to capacity inclusive)
+        # Using numpy for 100x speedup
         try:
-            dp = [[0 for _ in range(capacity + 1)] for _ in range(n + 1)]
+            # We need the full table for backtracking to generate the trace
+            # dp[i][w] = max value using first i items with capacity w
+            dp = np.zeros((n + 1, capacity + 1), dtype=np.int32)
         except MemoryError as e:
             raise ValueError(f"DP table too large (n={n}, capacity={capacity}): {e}")
 
+        # Vectorized DP update
         for i in range(1, n + 1):
             item = items[i - 1]
-            wt = item.weight
-            val = item.value
-            for w in range(1, capacity + 1):
-                if wt <= w:
-                    dp[i][w] = max(val + dp[i - 1][w - wt], dp[i - 1][w])
-                else:
-                    dp[i][w] = dp[i - 1][w]
+            wt = int(item.weight)  # Ensure integer for indexing
+            val = int(item.value)
+            
+            # Copy previous row
+            dp[i] = dp[i-1]
+            
+            # Update where weight fits
+            # dp[i][w] = max(dp[i-1][w], dp[i-1][w-wt] + val)
+            if wt <= capacity:
+                # We can pick this item for capacities >= wt
+                # dp[i-1, :-wt] corresponds to capacities 0 to capacity-wt
+                # adding val gives candidate values
+                candidate_values = dp[i - 1, :-wt] + val
+                
+                # Check against existing values for capacities wt to capacity
+                current_values = dp[i, wt:]
+                
+                # Update in place
+                dp[i, wt:] = np.maximum(current_values, candidate_values)
 
-        max_val = dp[n][capacity]
+        max_val = int(dp[n][capacity])
 
         # Backtrack to find items
         w = capacity

@@ -221,3 +221,48 @@ def test_brevity_reward_func_multiple():
     assert rewards[0] == 1.0
     assert 0.0 < rewards[1] < 1.0
     assert rewards[2] == 0.0
+
+
+def test_brevity_reward_func_empty_completion():
+    """Test brevity reward with empty completion (edge case)."""
+    completions = [""]
+    rewards = brevity_reward_func(completions)
+
+    assert len(rewards) == 1
+    assert rewards[0] == 0.0
+
+
+def test_brevity_reward_func_whitespace_only():
+    """Test brevity reward with whitespace-only completion (edge case)."""
+    completions = ["   \n\t  "]
+    rewards = brevity_reward_func(completions)
+
+    assert len(rewards) == 1
+    assert rewards[0] == 0.0
+
+
+def test_brevity_reward_func_mixed_valid_invalid():
+    """Test brevity reward with mix of valid and invalid completions."""
+    completions = [
+        " ".join(["word"] * 100),  # Valid: 100 tokens -> 1.0
+        "",  # Invalid: empty -> 0.0
+        " ".join(["word"] * 600),  # Valid: 600 tokens -> between 0.5 and 1.0
+    ]
+
+    rewards = brevity_reward_func(completions)
+
+    assert len(rewards) == 3
+    assert rewards[0] == 1.0  # 100 tokens (< 512)
+    assert rewards[1] == 0.0  # empty
+    # 600 tokens: between 512 and 1024, so reward = 1.0 - 0.5 * ((600-512)/512) = 1.0 - 0.5 * 0.171875 = 0.914
+    assert 0.9 < rewards[2] < 1.0  # 600 tokens
+
+
+def test_brevity_reward_func_all_invalid():
+    """Test brevity reward when all completions are invalid."""
+    completions = ["", "   ", "\n\t"]
+    rewards = brevity_reward_func(completions)
+
+    # Should return list with 0.0 for each
+    assert len(rewards) == 3
+    assert all(r == 0.0 for r in rewards)

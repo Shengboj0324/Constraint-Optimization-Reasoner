@@ -87,6 +87,60 @@ class RLConfig:
     # Higher weights for more critical objectives
     reward_weights: List[float] = field(default_factory=lambda: [1.0, 2.0, 3.0, 0.5])
 
+    def __post_init__(self):
+        """Validate configuration after initialization.
+
+        Raises:
+            ValueError: If configuration is invalid
+        """
+        # Validate reward weights
+        if not isinstance(self.reward_weights, list):
+            raise ValueError(
+                f"reward_weights must be a list, got {type(self.reward_weights)}"
+            )
+
+        if len(self.reward_weights) != 4:
+            raise ValueError(
+                f"Expected 4 reward weights [format, feasibility, optimality, brevity], "
+                f"got {len(self.reward_weights)}: {self.reward_weights}"
+            )
+
+        if any(not isinstance(w, (int, float)) for w in self.reward_weights):
+            raise ValueError(
+                f"All reward weights must be numeric, got {self.reward_weights}"
+            )
+
+        if any(w < 0 for w in self.reward_weights):
+            raise ValueError(
+                f"Reward weights must be non-negative, got {self.reward_weights}"
+            )
+
+        if sum(self.reward_weights) == 0:
+            raise ValueError(
+                "At least one reward weight must be positive (sum cannot be zero)"
+            )
+
+        # Validate other critical parameters
+        if self.per_device_train_batch_size <= 0:
+            raise ValueError(
+                f"per_device_train_batch_size must be positive, got {self.per_device_train_batch_size}"
+            )
+
+        if self.gradient_accumulation_steps <= 0:
+            raise ValueError(
+                f"gradient_accumulation_steps must be positive, got {self.gradient_accumulation_steps}"
+            )
+
+        if self.learning_rate <= 0:
+            raise ValueError(
+                f"learning_rate must be positive, got {self.learning_rate}"
+            )
+
+        if self.kl_coeff < 0:
+            raise ValueError(
+                f"kl_coeff must be non-negative, got {self.kl_coeff}"
+            )
+
 
 @dataclass
 class InferenceConfig:

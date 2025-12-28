@@ -145,19 +145,25 @@ class InferenceEngine:
 
                 parsed = parse_output(raw_output)
 
-                # Verify
-                if parsed["answer"]:
-                    logger.info("Verifying solution...")
-                    is_feasible = self.verifier.verify_feasibility(
-                        problem_text, parsed["answer"]
-                    )
-                    is_optimal = self.verifier.verify_optimality(
-                        problem_text, parsed["answer"]
-                    )
-                else:
-                    logger.warning("No answer found in output")
-                    is_feasible = False
-                    is_optimal = False
+                # Verify using comprehensive method
+                logger.info("Verifying solution...")
+                
+                # Extract claimed status if present in output
+                claimed_status = None
+                if parsed.get('optimality_certificate'):
+                    if 'Status: OPTIMAL' in parsed['optimality_certificate']:
+                        claimed_status = 'OPTIMAL'
+                    elif 'Status: BOUNDED' in parsed['optimality_certificate']:
+                        claimed_status = 'BOUNDED'
+
+                result_metrics = self.verifier.verify_comprehensive(
+                    problem_text, 
+                    parsed["answer"],
+                    claimed_status=claimed_status
+                )
+                
+                is_feasible = result_metrics.is_feasible
+                is_optimal = result_metrics.is_optimal
 
                 result = {
                     "raw_output": raw_output,
@@ -166,6 +172,12 @@ class InferenceEngine:
                         "feasible": is_feasible,
                         "optimal": is_optimal,
                         "verified": is_feasible and is_optimal,
+                        "metrics": {
+                            "weight": result_metrics.solution_weight,
+                            "value": result_metrics.solution_value,
+                            "optimum": result_metrics.computed_optimum,
+                            "gap": result_metrics.gap
+                        }
                     },
                     "attempt": attempt + 1,
                 }
@@ -184,17 +196,29 @@ class InferenceEngine:
                     best_score = score
                     best_result = result
 
-                # If we got a verified solution, stop early
+                # Stop early if verified
                 if is_feasible and is_optimal:
                     logger.info(
                         f"✓ Verified solution found on attempt {attempt + 1}/{max_retries}"
                     )
                     return result
+                
+                # Feedback Loop (Reflexion)
+                logger.warning(
+                    f"Attempt {attempt + 1} failed verification: "
+                    f"feasible={is_feasible}, optimal={is_optimal}"
+                )
+                
+                # Synthesize feedback for next prompt
+                if not is_feasible:
+                    feedback = f"Error: Total weight {result_metrics.solution_weight} exceeds capacity {result_metrics.capacity}."
+                elif not is_optimal:
+                    feedback = f"Error: Suboptimal. Value {result_metrics.solution_value} < Optimum {result_metrics.computed_optimum}."
                 else:
-                    logger.warning(
-                        f"Attempt {attempt + 1} failed verification: "
-                        f"feasible={is_feasible}, optimal={is_optimal}"
-                    )
+                    feedback = "Error: Solution verification failed."
+
+                # Append feedback to prompt for next retry
+                formatted_prompt += f"\n\n[System Feedback]: Your previous solution was incorrect. {feedback} Try again."
 
             except Exception as e:
                 logger.error(f"Error on attempt {attempt + 1}: {e}", exc_info=True)

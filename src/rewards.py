@@ -236,7 +236,20 @@ def brevity_reward_func(completions: List[str], **kwargs) -> List[float]:
 
         # Simple token count approximation (whitespace split)
         # More accurate would use tokenizer, but this is fast and good enough
-        token_count = len(completion.split())
+        # Defensive: handle edge cases that could cause crashes
+        try:
+            token_count = len(str(completion).split())
+
+            # Handle edge case: empty or whitespace-only completion
+            if token_count == 0:
+                logger.warning(f"Completion {i}: Empty or whitespace-only completion")
+                rewards.append(0.0)
+                continue
+
+        except Exception as e:
+            logger.error(f"Completion {i}: Error counting tokens: {e}")
+            rewards.append(0.0)
+            continue
 
         if token_count <= 512:
             reward = 1.0
@@ -249,6 +262,17 @@ def brevity_reward_func(completions: List[str], **kwargs) -> List[float]:
         rewards.append(reward)
         logger.debug(f"Completion {i}: {token_count} tokens, brevity reward={reward:.2f}")
 
-    avg_tokens = sum(len(c.split()) for c in completions) / len(completions)
-    logger.info(f"Brevity rewards: avg {avg_tokens:.0f} tokens, avg reward {sum(rewards)/len(rewards):.2f}")
+    # Defensive: handle empty completions list or all-invalid completions
+    if not rewards:
+        logger.warning("No valid completions to compute brevity rewards")
+        return []
+
+    # Defensive: handle potential division by zero or errors in averaging
+    try:
+        avg_tokens = sum(len(str(c).split()) for c in completions if isinstance(c, str)) / len(completions)
+        avg_reward = sum(rewards) / len(rewards)
+        logger.info(f"Brevity rewards: avg {avg_tokens:.0f} tokens, avg reward {avg_reward:.2f}")
+    except (ZeroDivisionError, ValueError) as e:
+        logger.warning(f"Error computing averages: {e}")
+
     return rewards

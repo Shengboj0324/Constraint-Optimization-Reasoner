@@ -41,18 +41,27 @@ This structure allows "Proof-Carrying Code" — the answer can be automatically 
 
 ## Installation
 
-**Important**: Install the package in editable mode to ensure proper imports:
+**⚠️ CRITICAL**: You MUST install the package in editable mode before running tests or notebooks:
 
 ```bash
-# Install dependencies
+# Step 1: Install dependencies
 pip install -r requirements.txt
 
-# Install the project package (required!)
+# Step 2: Install the project package (REQUIRED!)
+# This is MANDATORY - all imports depend on this
 pip install -e .
 
-# Optional: Install Tunix for training
+# Step 3: Verify installation
+python -c "from src import OptimizationDataset, Verifier; print('✓ Installation successful')"
+
+# Optional: Install Tunix for training (requires TPU access)
 pip install "google-tunix[prod]"
 ```
+
+**Why is this required?**
+- All code uses `from src.module import ...` which requires package installation
+- Without this step, you'll get `ModuleNotFoundError: No module named 'src'`
+- The `-e` flag enables "editable" mode so code changes are reflected immediately
 
 ## Workflow
 

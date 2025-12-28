@@ -26,20 +26,26 @@ cd Constraint-Optimization-Reasoner
 # Install dependencies
 pip install -r requirements.txt
 
-# Install package in editable mode (REQUIRED!)
+# ⚠️ CRITICAL: Install package in editable mode (REQUIRED!)
+# This step is MANDATORY - tests and notebooks will fail without it
 pip install -e .
 
 # Verify installation
-python -c "from src import OptimizationDataset, Verifier, InferenceEngine"
+python -c "from src import OptimizationDataset, Verifier, InferenceEngine; print('✓ Package installed successfully')"
 ```
+
+**Why is `pip install -e .` required?**
+- All code imports from `src.*` which requires the package to be installed
+- Without this, you'll get `ModuleNotFoundError: No module named 'src'`
+- The `-e` flag installs in "editable" mode so changes are reflected immediately
 
 ### 2. Run Tests
 
 ```bash
-# Run all tests (should see 63/63 passing)
+# Run all tests (should see 81/81 passing)
 pytest tests/ -v
 
-# Expected output: "63 passed in ~0.1s"
+# Expected output: "81 passed in ~0.1s"
 ```
 
 ### 3. Generate Demo Data
