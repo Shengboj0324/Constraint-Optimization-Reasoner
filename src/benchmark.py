@@ -43,6 +43,7 @@ class BenchmarkMetrics:
     format_valid_count: int
     feasible_count: int
     optimal_count: int
+    gaps: List[float]  # Raw list of optimality gaps
 
 
 class BenchmarkSuite:
@@ -176,6 +177,7 @@ class BenchmarkSuite:
             format_valid_count=format_valid_count,
             feasible_count=feasible_count,
             optimal_count=optimal_count,
+            gaps=gaps,  # Expose raw gaps for plotting
         )
         
         logger.info("Benchmark complete!")
