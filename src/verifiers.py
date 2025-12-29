@@ -98,8 +98,9 @@ class Verifier:
             return None, None
 
         # Parse items (use DOTALL to handle multiline JSON)
+        # Supports both "Available items:" (legacy) and "Items:" (notebook)
         items_match = re.search(
-            r"Available items:\s*(\[.*?\])", problem_text, re.DOTALL
+            r"(?:Available items|Items):\s*(\[.*?\])", problem_text, re.DOTALL
         )
         if not items_match:
             logger.warning("Could not parse items from problem text")

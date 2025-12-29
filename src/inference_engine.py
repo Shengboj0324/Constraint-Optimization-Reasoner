@@ -33,50 +33,90 @@ class MockInference:
     """Mock inference engine for testing with enhanced schema."""
 
     def generate(self, prompts: List[str], **kwargs) -> List[str]:
-        # Mimic enhanced strict format response per judge recommendations
-        return (
-            [
-                """<parse>
-{"capacity": 50, "items": [{"name": "Item_0", "weight": 5, "value": 10}]}
+        """
+        Generates dynamic mock responses based on the input prompts.
+        Ensures the mock response matches the specific problem instance (capacity/items).
+        """
+        responses = []
+        for prompt in prompts:
+            # 1. Parse the prompt to find capacity and items (Blind Regex)
+            import re
+            import json
+            
+            # Defaults
+            capacity = 10
+            items = [{"name": "Item_0", "weight": 5, "value": 10}]
+            
+            # Try to extract capacity
+            cap_match = re.search(r"Knapsack capacity:\s*(\d+)", prompt)
+            if cap_match:
+                capacity = int(cap_match.group(1))
+                
+            # Try to extract items
+            items_match = re.search(r"(?:Available items|Items):\s*(\[.*?\])", prompt, re.DOTALL)
+            if items_match:
+                try:
+                    items = json.loads(items_match.group(1))
+                except:
+                    pass
+            
+            # 2. Solve greedily (Validation Strategy)
+            selected = []
+            current_weight = 0
+            current_value = 0
+            
+            # Simple greedy by value density 
+            # (Mock doesn't need to be perfect, just feasible for the demo)
+            sorted_items = sorted(items, key=lambda x: x['value'] / x['weight'] if x['weight'] > 0 else 0, reverse=True)
+            
+            for item in sorted_items:
+                if current_weight + item['weight'] <= capacity:
+                    selected.append(item['name'])
+                    current_weight += item['weight']
+                    current_value += item['value']
+            
+            # 3. Construct the Response String
+            # Helper to allow embedding curlies in f-string
+            nl = "\n" 
+            response = f"""<parse>
+{json.dumps({"capacity": capacity, "items": items})}
 </parse>
 
 <reasoning>
-Mock reasoning trace:
-1. Analyze capacity: 50
-2. Evaluate items: Item_0 (weight=5, value=10)
-3. Select Item_0 (fits within capacity)
+Mock Dynamic Reasoning:
+1. Analyzed capacity: {capacity}
+2. Evaluated {len(items)} items.
+3. selected {len(selected)} items fitting capacity.
 </reasoning>
 
 <solution>
-{"selected": ["Item_0"], "total_weight": 5, "total_value": 10}
+{json.dumps({"selected": selected, "total_weight": current_weight, "total_value": current_value})}
 </solution>
 
 <feasibility_certificate>
-Weight check: 5 <= 50 (capacity)
-Item validity: All selected items exist in problem
+Weight check: {current_weight} <= {capacity}
 Constraint satisfaction: PASSED
 </feasibility_certificate>
 
 <optimality_certificate>
-Computed optimum: 10
+Computed optimum: {current_value}
 Status: OPTIMAL
 Gap: 0
-Proof: Only one item available, selecting it is optimal
+Proof: Mock logic deems this optimal.
 </optimality_certificate>
 
 <final>
 Solution quality: OPTIMAL
 Verification status: PASSED
-Confidence: HIGH (deterministic solver)
-Selected 1 items with total value 10 and weight 5/50
+Confidence: HIGH
 </final>
 
 <answer>
-["Item_0"]
+{json.dumps(selected)}
 </answer>"""
-            ]
-            * len(prompts)
-        )
+            responses.append(response)
+            
+        return responses
 
 
 class InferenceEngine:
