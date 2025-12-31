@@ -19,9 +19,6 @@ from src.config import config
 
 logger = get_logger(__name__)
 
-# Safety limit for exact DP verification (prevents timeout/OOM on huge problems)
-MAX_DP_CAPACITY = 20000
-
 
 @dataclass
 class DetailedVerificationResult:
@@ -285,17 +282,6 @@ class Verifier:
             # Solve exactly using DP
             n = len(items)
 
-            # Safety Guardrail: Skip exact DP for massive capacities
-            if capacity > MAX_DP_CAPACITY:
-                logger.warning(
-                    f"Capacity {capacity} > {MAX_DP_CAPACITY}. Skipping exact DP verification."
-                )
-                # We can't disprove optimality without solving, but we can't prove it either.
-                # Strictly speaking, verify_optimality returns whether it IS optimal.
-                # Returning False is safer than hanging, though ambiguous. 
-                # Better to use verify_comprehensive for these cases.
-                return False
-
             # Check for edge cases
             if n == 0:
                 # No items available - only empty solution is optimal
@@ -457,24 +443,6 @@ class Verifier:
 
         # Compute optimal value using DP
         n = len(items)
-        
-        # Safety Guardrail: Skip exact DP for massive capacities
-        if capacity > MAX_DP_CAPACITY:
-            logger.warning(
-                f"Capacity {capacity} > {MAX_DP_CAPACITY}. Skipping exact DP verification."
-            )
-            return DetailedVerificationResult(
-                is_feasible=is_feasible,
-                is_optimal=False, # Unknown, effectively
-                solution_weight=solution_weight,
-                solution_value=solution_value,
-                computed_optimum=0,
-                capacity=capacity,
-                status="BOUNDED", # Correct status for unverified optimality
-                gap=0,
-                false_optimal_claim=False,
-            )
-            
         try:
             dp = [[0 for _ in range(capacity + 1)] for _ in range(n + 1)]
         except MemoryError:

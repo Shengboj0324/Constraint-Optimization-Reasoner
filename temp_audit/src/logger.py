@@ -105,5 +105,23 @@ def get_logger(name: str) -> logging.Logger:
     return logger
 
 
-# Loggers are now initialized lazily via get_logger()
-# This avoids side effects during import (e.g. creating log files unexpectedly)
+# Create default loggers for each module (both direct and package import names)
+data_logger = setup_logger("data_loader")
+setup_logger("src.data_loader")  # Also configure package import name
+
+verifier_logger = setup_logger("verifiers")
+setup_logger("src.verifiers")
+
+inference_logger = setup_logger("inference_engine")
+setup_logger("src.inference_engine")
+
+rewards_logger = setup_logger("rewards")
+setup_logger("src.rewards")
+
+api_logger = setup_logger("api")
+setup_logger("deployment.app")
+
+# Configure other modules
+setup_logger("src.format_utils")
+setup_logger("src.validation")
+setup_logger("src.logger")

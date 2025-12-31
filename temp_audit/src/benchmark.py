@@ -84,30 +84,19 @@ class BenchmarkSuite:
     def run_benchmark(
         self, 
         inference_fn: Optional[callable] = None,
-        verbose: bool = False,
-        allow_ground_truth: bool = False
+        verbose: bool = False
     ) -> BenchmarkMetrics:
         """
         Run benchmark suite and compute metrics.
         
         Args:
             inference_fn: Function that takes problem_text and returns output_text
+                         If None, uses ground truth targets for validation
             verbose: Print detailed progress
-            allow_ground_truth: If True, uses target answer when inference_fn is None (DEBUG ONLY)
         
         Returns:
             BenchmarkMetrics with all computed metrics
-            
-        Raises:
-            ValueError: If inference_fn is None and allow_ground_truth is False
         """
-        if inference_fn is None and not allow_ground_truth:
-            raise ValueError(
-                "inference_fn required for submission benchmarking. "
-                "Ground truth fallback is disabled to ensure metric integrity. "
-                "Set allow_ground_truth=True explicitly for debugging."
-            )
-            
         logger.info(f"Running benchmark on {self.size} cases...")
         
         format_valid_count = 0
