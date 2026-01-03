@@ -1,11 +1,11 @@
 google-tunix[prod]
-jax[cpu]
+jax
 flax
 optax
 sentencepiece
 transformers
 torch
-numpy
+numpy<2.0
 pandas
 fastapi
 uvicorn

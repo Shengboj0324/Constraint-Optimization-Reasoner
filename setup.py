@@ -20,7 +20,6 @@ setup(
         "fastapi>=0.100.0",
         "uvicorn>=0.23.0",
         "pydantic>=2.0.0",
-        "colorlog>=6.7.0",
     ],
     extras_require={
         "dev": [
