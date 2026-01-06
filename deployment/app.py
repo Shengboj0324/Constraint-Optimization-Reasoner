@@ -52,18 +52,6 @@ def health_check():
 
 @app.post("/solve", response_model=OptimizationResponse)
 def solve_problem(request: ProblemRequest):
-    """
-    Solve a constraint optimization problem.
-
-    Args:
-        request: Problem request with problem_text
-
-    Returns:
-        OptimizationResponse with solution and verification status
-
-    Raises:
-        HTTPException: If validation fails or solving encounters an error
-    """
     try:
         # Validate input
         logger.info(f"Received solve request: {request.problem_text[:100]}...")
