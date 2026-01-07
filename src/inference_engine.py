@@ -78,6 +78,10 @@ class MockInference:
             # 3. Construct the Response String
             # Helper to allow embedding curlies in f-string
             nl = "\n" 
+            # Build the mock response using a conservative status.  The mock engine
+            # does not guarantee optimality, so we must avoid claiming OPTIMAL or
+            # a fully proven solution.  Instead, we report the solution as
+            # bounded/approximate and note that verification has not been proven.
             response = f"""<parse>
 {json.dumps({"capacity": capacity, "items": items})}
 </parse>
@@ -86,7 +90,7 @@ class MockInference:
 Mock Dynamic Reasoning:
 1. Analyzed capacity: {capacity}
 2. Evaluated {len(items)} items.
-3. selected {len(selected)} items fitting capacity.
+3. Selected {len(selected)} items fitting capacity.
 </reasoning>
 
 <solution>
@@ -106,9 +110,9 @@ Proof: Mock inference does not guarantee optimality.
 </optimality_certificate>
 
 <final>
-Solution quality: OPTIMAL
-Verification status: PASSED
-Confidence: HIGH
+Solution quality: BOUNDED
+Verification status: UNPROVEN
+Confidence: LOW
 </final>
 
 <answer>
