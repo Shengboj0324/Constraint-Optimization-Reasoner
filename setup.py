@@ -13,11 +13,10 @@ setup(
     packages=find_packages(),
     python_requires=">=3.8",
     install_requires=[
-        "numpy>=1.21.0",
+        "numpy>=1.21.0, <2.0",
         "sentencepiece",
-        "transformers",
+        "transformers>=4.40.0",
         "torch",
-        "numpy<2.0",
         "pandas<2.2",
         "scipy<1.13",
         "fastapi>=0.100.0",
